@@ -5,21 +5,120 @@ output:
     keep_md: true
 ---
 
+===
+
+## Introduction
+The data is from a personal activity monitoring device. This device collects data at 5 minute intervals through out the day. The data consists of two months of data from an anonymous individual collected during the months of October and November, 2012 and include the number of steps taken in 5 minute intervals each day.
+
+The dataset is downloaded from the [course web site](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip).
 
 ## Loading and preprocessing the data
-
-
+- Load the data and see its structure.  
+```{r, load data and take a glance}
+act = read.csv("activity.csv")
+str(act)
+summary(act)
+```
+- We find there are many NAs. So we take out NAs for this stage and make a sub dataset withou NAs.  
+```{r, make a new sub dataset}
+act.clean = act[which(!is.na(act$steps)),]
+str(act)
+summary(act)
+```
 
 ## What is mean total number of steps taken per day?
+- We first calculate the total number of steps taken per day.  
+```{r, calculate total steps take per day}
+ttl.perday = aggregate(steps ~ date, data = act.clean, sum)
+```
+- Then we make a histogram showing the total number of steps take each day. Most of the total steps taking are between 10,000 and 15,000.  
+```{r}
+hist(ttl.perday$steps, xlab = "total steps taken per day")
+```
 
-
+- Last we calculate the mean and mdian of the total number of steps take per day.  
+```{r, calculate the mean and median}
+mean(ttl.perday$steps)
+median(ttl.perday$steps)
+```
 
 ## What is the average daily activity pattern?
+- We make a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
 
+```{r, calculate average steps within each interval across all days}
+avg.perday = aggregate(steps ~ interval, data = act.clean, mean)
+library(ggplot2)
+g <- ggplot(avg.perday, aes(interval, steps)) + geom_line() + ylab("average steps taken")
+g
+```
 
+- On the chart above, we can see there is a peak interval for steps taken. Let's find which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps.  
+
+```{r, find out the peak interval}
+library(ggplot2)
+g <- ggplot(avg.perday, aes(interval, steps)) + geom_line() + ylab("average steps taken")
+g + geom_point(data = subset(avg.perday, steps == max(steps)), aes(interval, steps),
+               shape = "O", col = "red", size = 10) + 
+    geom_text(data = subset(avg.perday, steps == max(steps)),
+              aes(interval, steps, label = paste("(",interval,", ",round(steps,2),")")),
+              vjust = -0.1, hjust = -0.1, col = "red")
+```
 
 ## Imputing missing values
+There are a number of days/intervals where there are missing values (coded as NA). The presence of missing days may introduce bias into some calculations or summaries of the data.  
 
+So we first calculate total number of missing values in the dataset (i.e. the total number of rows with NAs)  
 
+```{r, total count of NAs}
+sum(is.na(act$steps))
+```
+
+Then we create a new dataset that is equal to the original dataset but with the mean for that 5-minute interval filling in the missing data.
+
+```{r, create new dataset will missing value replaced}
+act.fill = act
+act.fill$temp <- avg.perday$steps
+for (i in 1:nrow(act.fill)) {
+    if (is.na(act.fill[i,"steps"])) {
+        act.fill[i,"steps"] = act.fill[i,"temp"]
+        }
+}
+```
+
+Now we can make a histogram of the total number of steps taken each day and calculate its mean and median values.  
+
+- To see if these values differ from the estimates from the first part above.
+
+```{r, mean and median of new dataset}
+ttl.perday_fill = aggregate(steps ~ date, data = act.fill, sum)
+hist(ttl.perday_fill$steps, xlab = "total steps taken per day")
+mean(ttl.perday_fill$steps)
+median(ttl.perday_fill$steps)
+```
+
+- To find the impact of imputing missing data on the estimates of the total daily number of steps.
+
+```{r, imact of imputing missing data}
+mean(ttl.perday_fill$steps) / mean(ttl.perday$steps)
+median(ttl.perday_fill$steps) / median(ttl.perday$steps)
+```
 
 ## Are there differences in activity patterns between weekdays and weekends?
+Now we use the dataset with the filled-in missing values for this part.  
+First step is to create a new factor variable in the dataset with two levels ("weekday" and "weekend") indicating whether a given date is a weekday or weekend.  
+
+```{r, create weekday/weekend factor variable}
+act.fill$date <- as.POSIXct(strptime(act.fill$date, "%Y-%m-%d"))
+act.fill$wkday <- weekdays(act.fill$date)
+act.fill$isweekend <- ifelse(act.fill$wkday %in% c("星期六", "星期日"), "weekend", "weekday")
+act.fill$isweekend <- as.factor(act.fill$isweekend)
+```
+
+Then we make a panel plot containing a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis).
+
+```{r, make panel plot}
+avg.perday_fill = aggregate(steps ~ interval + isweekend, data = act.fill, mean)
+library(ggplot2)
+g <- ggplot(avg.perday_fill, aes(interval, steps)) + geom_line() + ylab("average steps taken")
+g + facet_grid(isweekend ~ .)
+```
