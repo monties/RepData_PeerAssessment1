@@ -1,11 +1,14 @@
----
-title: "Reproducible Research: Peer Assessment 1"
-output:
-    html_document:
-        keep_md: true
----
-```{r setoptions, echo=TRUE}
+# Reproducible Research: Peer Assessment 1
+
+```r
 require(knitr)
+```
+
+```
+## Loading required package: knitr
+```
+
+```r
 opts_chunk$set(echo = TRUE, fig.path = "figure/")
 ```
 
@@ -18,48 +21,112 @@ The dataset is downloaded from the [course web site](https://d396qusza40orc.clou
 
 # Loading and preprocessing the data
 - Load the data and see its structure.  
-```{r, load data and take a glance}
+
+```r
 unzip("activity.zip") 
 act = read.csv("activity.csv")
 str(act)
+```
+
+```
+## 'data.frame':	17568 obs. of  3 variables:
+##  $ steps   : int  NA NA NA NA NA NA NA NA NA NA ...
+##  $ date    : Factor w/ 61 levels "2012-10-01","2012-10-02",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
+```
+
+```r
 summary(act)
 ```
+
+```
+##      steps                date          interval     
+##  Min.   :  0.00   2012-10-01:  288   Min.   :   0.0  
+##  1st Qu.:  0.00   2012-10-02:  288   1st Qu.: 588.8  
+##  Median :  0.00   2012-10-03:  288   Median :1177.5  
+##  Mean   : 37.38   2012-10-04:  288   Mean   :1177.5  
+##  3rd Qu.: 12.00   2012-10-05:  288   3rd Qu.:1766.2  
+##  Max.   :806.00   2012-10-06:  288   Max.   :2355.0  
+##  NA's   :2304     (Other)   :15840
+```
 - We find there are many NAs. So we take out NAs for this stage and make a sub dataset withou NAs.  
-```{r, make a new sub dataset}
+
+```r
 act.clean = act[which(!is.na(act$steps)),]
 str(act)
+```
+
+```
+## 'data.frame':	17568 obs. of  3 variables:
+##  $ steps   : int  NA NA NA NA NA NA NA NA NA NA ...
+##  $ date    : Factor w/ 61 levels "2012-10-01","2012-10-02",..: 1 1 1 1 1 1 1 1 1 1 ...
+##  $ interval: int  0 5 10 15 20 25 30 35 40 45 ...
+```
+
+```r
 summary(act)
+```
+
+```
+##      steps                date          interval     
+##  Min.   :  0.00   2012-10-01:  288   Min.   :   0.0  
+##  1st Qu.:  0.00   2012-10-02:  288   1st Qu.: 588.8  
+##  Median :  0.00   2012-10-03:  288   Median :1177.5  
+##  Mean   : 37.38   2012-10-04:  288   Mean   :1177.5  
+##  3rd Qu.: 12.00   2012-10-05:  288   3rd Qu.:1766.2  
+##  Max.   :806.00   2012-10-06:  288   Max.   :2355.0  
+##  NA's   :2304     (Other)   :15840
 ```
 
 # What is mean total number of steps taken per day?
 - We first calculate the total number of steps taken per day.  
-```{r, calculate total steps take per day}
+
+```r
 ttl.perday = aggregate(steps ~ date, data = act.clean, sum)
 ```
 - Then we make a histogram showing the total number of steps take each day. Most of the total steps taking are between 10,000 and 15,000.  
-```{r, total steps per day - na.rm}
+
+```r
 hist(ttl.perday$steps, xlab = "total steps taken per day")
 ```
 
+![](figure/total steps per day - na.rm-1.png) 
+
 - Last we calculate the mean and mdian of the total number of steps take per day.  
-```{r, calculate the mean and median}
+
+```r
 mean(ttl.perday$steps)
+```
+
+```
+## [1] 10766.19
+```
+
+```r
 median(ttl.perday$steps)
+```
+
+```
+## [1] 10765
 ```
 
 # What is the average daily activity pattern?
 - We make a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)
 
-```{r, calculate average steps within each interval across all days}
+
+```r
 avg.perday = aggregate(steps ~ interval, data = act.clean, mean)
 library(ggplot2)
 g <- ggplot(avg.perday, aes(interval, steps)) + geom_line() + ylab("average steps taken")
 g
 ```
 
+![](figure/calculate average steps within each interval across all days-1.png) 
+
 - On the chart above, we can see there is a peak interval for steps taken. Let's find which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps.  
 
-```{r, find out the peak interval}
+
+```r
 library(ggplot2)
 g <- ggplot(avg.perday, aes(interval, steps)) + geom_line() + ylab("average steps taken")
 g + geom_point(data = subset(avg.perday, steps == max(steps)), aes(interval, steps),
@@ -69,18 +136,26 @@ g + geom_point(data = subset(avg.perday, steps == max(steps)), aes(interval, ste
               vjust = -0.1, hjust = -0.1, col = "red")
 ```
 
+![](figure/find out the peak interval-1.png) 
+
 # Imputing missing values
 There are a number of days/intervals where there are missing values (coded as NA). The presence of missing days may introduce bias into some calculations or summaries of the data.  
 
 So we first calculate total number of missing values in the dataset (i.e. the total number of rows with NAs)  
 
-```{r, total count of NAs}
+
+```r
 sum(is.na(act$steps))
+```
+
+```
+## [1] 2304
 ```
 
 Then we create a new dataset that is equal to the original dataset but with the mean for that 5-minute interval filling in the missing data.
 
-```{r, create new dataset will missing value replaced}
+
+```r
 act.fill = act
 act.fill$temp <- avg.perday$steps
 for (i in 1:nrow(act.fill)) {
@@ -94,36 +169,69 @@ Now we can make a histogram of the total number of steps taken each day and calc
 
 - To see if these values differ from the estimates from the first part above.
 
-```{r, total steps per day - na.replace}
+
+```r
 ttl.perday_fill = aggregate(steps ~ date, data = act.fill, sum)
 hist(ttl.perday_fill$steps, xlab = "total steps taken per day")
+```
+
+![](figure/total steps per day - na.replace-1.png) 
+
+```r
 mean(ttl.perday_fill$steps)
+```
+
+```
+## [1] 10766.19
+```
+
+```r
 median(ttl.perday_fill$steps)
+```
+
+```
+## [1] 10766.19
 ```
 
 - To find the impact of imputing missing data on the estimates of the total daily number of steps.
 
-```{r, impact of imputing missing data}
+
+```r
 mean(ttl.perday_fill$steps) / mean(ttl.perday$steps)
+```
+
+```
+## [1] 1
+```
+
+```r
 median(ttl.perday_fill$steps) / median(ttl.perday$steps)
+```
+
+```
+## [1] 1.00011
 ```
 
 # Are there differences in activity patterns between weekdays and weekends?
 Now we use the dataset with the filled-in missing values for this part.  
 First step is to create a new factor variable in the dataset with two levels ("weekday" and "weekend") indicating whether a given date is a weekday or weekend.  
 
-```{r, create weekday/weekend factor variable}
+
+```r
 act.fill$date <- as.POSIXct(strptime(act.fill$date, "%Y-%m-%d"))
 act.fill$wkday <- weekdays(act.fill$date)
-act.fill$isweekend <- ifelse(act.fill$wkday %in% c("¬P´Á¤»", "¬P´Á¤é"), "weekend", "weekday")
+act.fill$isweekend <- ifelse(act.fill$wkday %in% c("æ˜ŸæœŸå…­", "æ˜ŸæœŸæ—¥"), "weekend", "weekday")
 act.fill$isweekend <- as.factor(act.fill$isweekend)
 ```
 
 Then we make a panel plot containing a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis).
 
-```{r, make panel plot of comparison}
+
+```r
 avg.perday_fill = aggregate(steps ~ interval + isweekend, data = act.fill, mean)
 library(ggplot2)
 g <- ggplot(avg.perday_fill, aes(interval, steps)) + geom_line() + ylab("average steps taken")
 g + facet_grid(isweekend ~ .)
 ```
+
+![](figure/make panel plot of comparison-1.png) 
