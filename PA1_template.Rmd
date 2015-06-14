@@ -3,6 +3,10 @@ title: "Reproducible Research: Peer Assessment 1"
 output: html_document
 keep_md: true
 ---
+```{r setoptions, echo=TRUE}
+require(knitr)
+opts_chunk$set(echo = TRUE, cache = TRUE, cache.path = "cache/", fig.path = "figure/")
+```
 
 ===============================================================================  
 
@@ -31,7 +35,7 @@ summary(act)
 ttl.perday = aggregate(steps ~ date, data = act.clean, sum)
 ```
 - Then we make a histogram showing the total number of steps take each day. Most of the total steps taking are between 10,000 and 15,000.  
-```{r}
+```{r, total steps per day - na.rm}
 hist(ttl.perday$steps, xlab = "total steps taken per day")
 ```
 
@@ -88,7 +92,7 @@ Now we can make a histogram of the total number of steps taken each day and calc
 
 - To see if these values differ from the estimates from the first part above.
 
-```{r, mean and median of new dataset}
+```{r, total steps per day - na.replace}
 ttl.perday_fill = aggregate(steps ~ date, data = act.fill, sum)
 hist(ttl.perday_fill$steps, xlab = "total steps taken per day")
 mean(ttl.perday_fill$steps)
@@ -97,7 +101,7 @@ median(ttl.perday_fill$steps)
 
 - To find the impact of imputing missing data on the estimates of the total daily number of steps.
 
-```{r, imact of imputing missing data}
+```{r, impact of imputing missing data}
 mean(ttl.perday_fill$steps) / mean(ttl.perday$steps)
 median(ttl.perday_fill$steps) / median(ttl.perday$steps)
 ```
@@ -115,7 +119,7 @@ act.fill$isweekend <- as.factor(act.fill$isweekend)
 
 Then we make a panel plot containing a time series plot of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis).
 
-```{r, make panel plot}
+```{r, make panel plot of comparison}
 avg.perday_fill = aggregate(steps ~ interval + isweekend, data = act.fill, mean)
 library(ggplot2)
 g <- ggplot(avg.perday_fill, aes(interval, steps)) + geom_line() + ylab("average steps taken")
