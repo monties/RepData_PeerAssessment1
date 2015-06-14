@@ -113,7 +113,7 @@ First step is to create a new factor variable in the dataset with two levels ("w
 ```{r, create weekday/weekend factor variable}
 act.fill$date <- as.POSIXct(strptime(act.fill$date, "%Y-%m-%d"))
 act.fill$wkday <- weekdays(act.fill$date)
-act.fill$isweekend <- ifelse(act.fill$wkday %in% c("æ˜ŸæœŸå…­", "æ˜ŸæœŸæ—¥"), "weekend", "weekday")
+act.fill$isweekend <- ifelse(act.fill$wkday %in% c("¬P´Á¤»", "¬P´Á¤é"), "weekend", "weekday")
 act.fill$isweekend <- as.factor(act.fill$isweekend)
 ```
 
